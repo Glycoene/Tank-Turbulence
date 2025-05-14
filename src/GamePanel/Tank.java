@@ -1,9 +1,9 @@
 package GamePanel;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
+import javax.swing.*;
 
 public class Tank {
     private int x, y;
@@ -12,6 +12,7 @@ public class Tank {
     public static final int DISPLAY_SIZE = 50;
     private int collisionSize = 30;
     private double rotationAngle = 0; // 单位：度，0 是向上
+    private boolean isDead = false;
 
     public Tank(int x, int y, String imagePath) {
         this.x = x;
@@ -30,11 +31,16 @@ public class Tank {
         g2d.setTransform(old);
     }
 
-    public Ellipse2D getFutureCollisionCircle(int dx, int dy) {
-        int centerX = x + DISPLAY_SIZE / 2 + dx;
-        int centerY = y + DISPLAY_SIZE / 2 + dy;
-        int radius = collisionSize / 2;
-        return new Ellipse2D.Double(centerX - radius, centerY - radius, collisionSize, collisionSize);
+    public Rectangle getBounds() {
+        return new Rectangle(x, y, DISPLAY_SIZE, DISPLAY_SIZE);
+    }
+
+    public void setDead(boolean isDead) {
+        this.isDead = isDead;
+    }
+
+    public boolean isDead() {
+        return isDead;
     }
 
     public void moveUp() { y -= speed; }
@@ -55,4 +61,11 @@ public class Tank {
 
     public int getX() { return x; }
     public int getY() { return y; }
+
+    // ✅ 添加用于预测碰撞的圆形区域
+    public Ellipse2D getFutureCollisionCircle(int dx, int dy) {
+        int centerX = x + DISPLAY_SIZE / 2 + dx;
+        int centerY = y + DISPLAY_SIZE / 2 + dy;
+        return new Ellipse2D.Double(centerX - collisionSize / 2.0, centerY - collisionSize / 2.0, collisionSize, collisionSize);
+    }
 }
