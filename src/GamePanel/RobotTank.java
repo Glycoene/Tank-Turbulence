@@ -27,6 +27,9 @@ public class RobotTank extends Tank {
         moveCooldown--;
         fireCooldown--;
 
+        // 先更新旋转角度（平滑旋转）
+        updateRotation();
+
         int dx = 0, dy = 0;
         int vectorX = player.getX() - getX();
         int vectorY = player.getY() - getY();
@@ -36,10 +39,10 @@ public class RobotTank extends Tank {
             if (random.nextDouble() < 0.02) {
                 int dir = random.nextInt(4);
                 switch (dir) {
-                    case 0 -> { dx = 3; setRotationAngle(90); }
-                    case 1 -> { dx = -3; setRotationAngle(270); }
-                    case 2 -> { dy = 3; setRotationAngle(180); }
-                    case 3 -> { dy = -3; setRotationAngle(0); }
+                    case 0 -> { dx = 3; setTargetAngle(90); }
+                    case 1 -> { dx = -3; setTargetAngle(270); }
+                    case 2 -> { dy = 3; setTargetAngle(180); }
+                    case 3 -> { dy = -3; setTargetAngle(0); }
                 }
                 tryMove(dx, dy);
             }
@@ -53,7 +56,7 @@ public class RobotTank extends Tank {
             // 尝试 X 方向
             if (dxOptions[0] != 0) {
                 int angle = dxOptions[0] > 0 ? 90 : 270;
-                setRotationAngle(angle);
+                setTargetAngle(angle);
                 if (trySmartMove(dxOptions[0], 0)) {
                     moved = true;
                 }
@@ -62,7 +65,7 @@ public class RobotTank extends Tank {
             // 尝试 Y 方向
             if (!moved && dyOptions[1] != 0) {
                 int angle = dyOptions[1] > 0 ? 180 : 0;
-                setRotationAngle(angle);
+                setTargetAngle(angle);
                 if (trySmartMove(0, dyOptions[1])) {
                     moved = true;
                 }
@@ -73,7 +76,7 @@ public class RobotTank extends Tank {
                 int[][] directions = {{3, 0, 90}, {-3, 0, 270}, {0, 3, 180}, {0, -3, 0}};
                 shuffleArray(directions);
                 for (int[] dir : directions) {
-                    setRotationAngle(dir[2]);
+                    setTargetAngle(dir[2]);
                     if (trySmartMove(dir[0], dir[1])) {
                         break;
                     }
@@ -115,7 +118,7 @@ public class RobotTank extends Tank {
         int bulletX = (int) (centerX + offset * Math.cos(angleRad)) - Bullet.DEFAULT_SIZE / 2;
         int bulletY = (int) (centerY + offset * Math.sin(angleRad)) - Bullet.DEFAULT_SIZE / 2;
 
-        bullets.add(new Bullet(bulletX, bulletY, getRotationAngle()));
+        bullets.add(new Bullet(bulletX, bulletY, getRotationAngle(), this));
     }
 
     private boolean canSeePlayer(Tank player) {

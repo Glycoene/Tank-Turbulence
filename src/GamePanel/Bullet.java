@@ -9,10 +9,13 @@ public class Bullet {
     private int lifeTime = 300;  // 存活帧数
     public static final int DEFAULT_SIZE = 10;
     private boolean expired = false;
+    private int safeFrames = 10;  // 子弹发射后10帧内不检测自己坦克碰撞
+    private Tank owner;
 
-    public Bullet(int x, int y, double angleDegree) {
+    public Bullet(int x, int y, double angleDegree, Tank owner) {
         this.x = x;
         this.y = y;
+        this.owner = owner;
 
         double angleRad = Math.toRadians(angleDegree - 90);
         double speed = 6.0;
@@ -20,9 +23,17 @@ public class Bullet {
         this.speedY = speed * Math.sin(angleRad);
     }
 
+    public Tank getOwner() {
+        return owner;
+    }
+
     public void move() {
         x += speedX;
         y += speedY;
+
+        if (safeFrames > 0) {
+            safeFrames--;
+        }
 
         lifeTime--;
         if (lifeTime <= 0) expired = true;
@@ -65,6 +76,7 @@ public class Bullet {
         g.setColor(Color.RED);
         g.fillOval(x, y, size, size);
     }
+
     private boolean destroyed = false;
 
     public void destroy() {
@@ -73,6 +85,9 @@ public class Bullet {
 
     public boolean isDestroyed() {
         return destroyed || expired;
+    }
+    public int getSafeFrames() {
+        return safeFrames;
     }
 
 }

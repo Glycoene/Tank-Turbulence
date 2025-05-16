@@ -20,6 +20,8 @@ public class GamePanel extends JPanel implements KeyListener {
     private Timer gameTimer;
     private boolean gameOver = false;
 
+    private boolean upPressed, downPressed, leftPressed, rightPressed;
+
     public GamePanel() {
         this.setPreferredSize(new Dimension(800, 600));
         this.setBackground(Color.LIGHT_GRAY);
@@ -73,48 +75,22 @@ public class GamePanel extends JPanel implements KeyListener {
         gameTimer.start();
     }
 
-    @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        gameMap.draw(g);
-
-        if (playerTank != null && !playerTank.isDead()) {
-            playerTank.draw(g, this);
-        }
-
-        for (RobotTank robot : robots) {
-            if (!robot.isDead()) {
-                robot.draw(g, this);
-            }
-        }
-
-        for (Bullet bullet : bullets) {
-            bullet.draw(g);
-        }
-    }
-
-    @Override
-    public void keyPressed(KeyEvent e) {
-        if (playerTank == null || playerTank.isDead() || gameOver) return;
-
-        int key = e.getKeyCode();
-
-        if (key == KeyEvent.VK_W || key == KeyEvent.VK_A ||
-                key == KeyEvent.VK_S || key == KeyEvent.VK_D) {
-            moveLogic.handleKeyPress(key, getWidth(), getHeight());
-        } else if (key == KeyEvent.VK_SPACE) {
-            fireBulletFrom(playerTank);
-        }
-
-        repaint();
-    }
-
-    @Override
-    public void keyReleased(KeyEvent e) {}
-    @Override
-    public void keyTyped(KeyEvent e) {}
-
     private void updateGameState() {
+        // 玩家坦克移动处理（持续按键）
+        int dx = 0, dy = 0;
+        if (upPressed) dy -= 4;
+        if (downPressed) dy += 4;
+        if (leftPressed) dx -= 4;
+        if (rightPressed) dx += 4;
+
+        if (dx != 0 || dy != 0) {
+            // 计算旋转角度
+            double angle = Math.toDegrees(Math.atan2(dy, dx));
+            playerTank.setRotationAngle(angle + 90);  // 根据你的方向调整偏移
+            moveLogic.tryMove(dx, dy);
+        }
+
+        // 更新子弹状态
         List<Bullet> toRemove = new ArrayList<>();
         for (Bullet bullet : bullets) {
             if (bullet.isDestroyed()) {
@@ -127,6 +103,7 @@ public class GamePanel extends JPanel implements KeyListener {
         }
         bullets.removeAll(toRemove);
 
+        // 更新机器人AI逻辑
         for (RobotTank robot : robots) {
             if (!robot.isDead()) {
                 robot.update(getWidth(), getHeight(), playerTank);
@@ -136,6 +113,8 @@ public class GamePanel extends JPanel implements KeyListener {
 
     private void checkBulletCollision(Bullet bullet, int prevX, int prevY) {
         Rectangle bulletBounds = bullet.getBounds();
+
+        // 碰撞墙体检测（反弹）
         for (Wall wall : gameMap.getWalls()) {
             Rectangle wallBounds = wall.getBounds();
             if (bulletBounds.intersects(wallBounds)) {
@@ -159,21 +138,29 @@ public class GamePanel extends JPanel implements KeyListener {
             }
         }
 
-        if (playerTank != null && !playerTank.isDead() && bulletBounds.intersects(playerTank.getBounds())) {
+        // 玩家被击中（安全帧外可被自己子弹击中）
+        if (playerTank != null && !playerTank.isDead() &&
+                bulletBounds.intersects(playerTank.getBounds()) &&
+                (bullet.getSafeFrames() <= 0 || bullet.getOwner() != playerTank)) {
             playerTank.setDead(true);
             bullet.destroy();
             triggerGameOver();
             return;
         }
 
+        // 机器人被击中（同样逻辑）
         for (RobotTank robot : robots) {
-            if (!robot.isDead() && bulletBounds.intersects(robot.getBounds())) {
+            if (!robot.isDead() &&
+                    bulletBounds.intersects(robot.getBounds()) &&
+                    (bullet.getSafeFrames() <= 0 || bullet.getOwner() != robot)) {
                 robot.setDead(true);
                 bullet.destroy();
                 return;
             }
         }
     }
+
+
 
     private void triggerGameOver() {
         gameOver = true;
@@ -189,14 +176,19 @@ public class GamePanel extends JPanel implements KeyListener {
     private void fireBulletFrom(Tank tank) {
         int centerX = tank.getX() + Tank.DISPLAY_SIZE / 2;
         int centerY = tank.getY() + Tank.DISPLAY_SIZE / 2;
+
+        // 发射角度修正 - 坦克默认图像是“向上”，而你设置了 rotationAngle = angle + 90
         double angleRad = Math.toRadians(tank.getRotationAngle() - 90);
-        int offset = Tank.DISPLAY_SIZE / 2;
+
+        int offset = Tank.BARREL_LENGTH;
 
         int bulletX = (int) (centerX + offset * Math.cos(angleRad)) - Bullet.DEFAULT_SIZE / 2;
         int bulletY = (int) (centerY + offset * Math.sin(angleRad)) - Bullet.DEFAULT_SIZE / 2;
 
-        bullets.add(new Bullet(bulletX, bulletY, tank.getRotationAngle()));
+        Bullet bullet = new Bullet(bulletX, bulletY, tank.getRotationAngle(), tank);
+        bullets.add(bullet);
     }
+
 
     private void closeGameWindow() {
         Window window = SwingUtilities.getWindowAncestor(this);
@@ -204,4 +196,56 @@ public class GamePanel extends JPanel implements KeyListener {
             window.dispose();
         }
     }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        gameMap.draw(g);
+
+        if (playerTank != null && !playerTank.isDead()) {
+            playerTank.draw(g, this);
+        }
+
+        for (RobotTank robot : robots) {
+            if (!robot.isDead()) {
+                robot.draw(g, this);
+            }
+        }
+
+        for (Bullet bullet : bullets) {
+            bullet.draw(g);
+        }
+    }
+
+    // 键盘事件处理
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+        if (playerTank == null || playerTank.isDead() || gameOver) return;
+
+        int key = e.getKeyCode();
+
+        switch (key) {
+            case KeyEvent.VK_W -> upPressed = true;
+            case KeyEvent.VK_S -> downPressed = true;
+            case KeyEvent.VK_A -> leftPressed = true;
+            case KeyEvent.VK_D -> rightPressed = true;
+            case KeyEvent.VK_SPACE -> fireBulletFrom(playerTank);
+        }
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+        int key = e.getKeyCode();
+
+        switch (key) {
+            case KeyEvent.VK_W -> upPressed = false;
+            case KeyEvent.VK_S -> downPressed = false;
+            case KeyEvent.VK_A -> leftPressed = false;
+            case KeyEvent.VK_D -> rightPressed = false;
+        }
+    }
+
+    @Override
+    public void keyTyped(KeyEvent e) {}
 }
