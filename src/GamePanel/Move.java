@@ -1,71 +1,49 @@
 package GamePanel;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.KeyEvent;
 import java.awt.geom.Ellipse2D;
 
-public class Move extends JPanel implements KeyListener {
-    private Tank tank;
-    private GameMap gameMap;
+public class Move {
+    private final Tank tank;
+    private final GameMap gameMap;
 
-    public Move() {
-        this.setPreferredSize(new Dimension(800, 600));
-        this.setBackground(Color.GRAY);
-
-        tank = new Tank(100, 100, "Tank.png");
-        tank.setCollisionSize(40); // 更接近真实大小
-
-        gameMap = new GameMap();
-
-        this.setFocusable(true);
-        this.addKeyListener(this);
+    public Move(Tank tank, GameMap gameMap) {
+        this.tank = tank;
+        this.gameMap = gameMap;
     }
 
-    @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        gameMap.draw(g);
-        tank.draw(g, this);
-    }
+    public void handleKeyPress(int keyCode, int panelWidth, int panelHeight) {
+        Ellipse2D futureCircle;
 
-    @Override
-    public void keyPressed(KeyEvent e) {
-        Ellipse2D future;
-        switch (e.getKeyCode()) {
-            case KeyEvent.VK_W:
-                future = tank.getFutureCollisionCircle(0, -5);
-                if (!gameMap.isColliding(future)) {
+        switch (keyCode) {
+            case KeyEvent.VK_W -> {
+                futureCircle = tank.getFutureCollisionCircle(0, -5);
+                if (!gameMap.isColliding(futureCircle)) {
                     tank.moveUp();
                     tank.setRotationAngle(0);
                 }
-                break;
-            case KeyEvent.VK_S:
-                future = tank.getFutureCollisionCircle(0, 5);
-                if (!gameMap.isColliding(future)) {
-                    tank.moveDown(getHeight());
+            }
+            case KeyEvent.VK_S -> {
+                futureCircle = tank.getFutureCollisionCircle(0, 5);
+                if (!gameMap.isColliding(futureCircle)) {
+                    tank.moveDown(panelHeight);
                     tank.setRotationAngle(180);
                 }
-                break;
-            case KeyEvent.VK_A:
-                future = tank.getFutureCollisionCircle(-5, 0);
-                if (!gameMap.isColliding(future)) {
+            }
+            case KeyEvent.VK_A -> {
+                futureCircle = tank.getFutureCollisionCircle(-5, 0);
+                if (!gameMap.isColliding(futureCircle)) {
                     tank.moveLeft();
                     tank.setRotationAngle(270);
                 }
-                break;
-            case KeyEvent.VK_D:
-                future = tank.getFutureCollisionCircle(5, 0);
-                if (!gameMap.isColliding(future)) {
-                    tank.moveRight(getWidth());
+            }
+            case KeyEvent.VK_D -> {
+                futureCircle = tank.getFutureCollisionCircle(5, 0);
+                if (!gameMap.isColliding(futureCircle)) {
+                    tank.moveRight(panelWidth);
                     tank.setRotationAngle(90);
                 }
-                break;
+            }
         }
-
-        repaint();
     }
-
-    @Override public void keyReleased(KeyEvent e) {}
-    @Override public void keyTyped(KeyEvent e) {}
 }
