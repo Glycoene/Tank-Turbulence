@@ -52,7 +52,7 @@ public class Screen extends JFrame {
             g.drawString("选择游戏模式", 220, 200);
             g.drawString("单人模式", 220, 280);
             g.drawString("双人模式", 220, 360);
-            g.drawString("1v1模式", 220, 440);
+
             if (select != null) {
                 g.drawImage(select, 160, picture_y, zzWidth, zzHeight, this);
             }
@@ -66,13 +66,13 @@ public class Screen extends JFrame {
             if (e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_W) {
                 // 如果已经在最上面，就跳转到最下面
                 if (picture_y == 230) {
-                    picture_y = 390;
+                    picture_y = 310;
                 } else {
                     picture_y -= 80;
                 }
             } else if (e.getKeyCode() == KeyEvent.VK_DOWN || e.getKeyCode() == KeyEvent.VK_S) {
                 // 如果已经在最下面，就跳转到最上面
-                if (picture_y == 390) {
+                if (picture_y == 310) {
                     picture_y = 230;
                 } else {
                     picture_y += 80;
