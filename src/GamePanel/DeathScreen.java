@@ -15,7 +15,7 @@ public class DeathScreen extends JFrame {
         JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
 
-        JLabel label = new JLabel("您已死亡", JLabel.CENTER);
+        JLabel label = new JLabel("You have die", JLabel.CENTER);
         label.setFont(new Font("Arial", Font.BOLD, 30));
         label.setForeground(Color.RED);
 

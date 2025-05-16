@@ -20,20 +20,34 @@ public class GameMap {
     // 随机生成地图并放置墙壁
     private void generateRandomMap(double wallProbability) {
         Random rand = new Random();
-        walls.clear();  // 清空之前的墙壁
+        walls.clear();
 
-        // 遍历地图生成墙壁
+        // 定义安全出生区（左上角 3x3 区域）
+        int safeZoneSize = 3;
+
         for (int y = 0; y < ROWS; y++) {
             for (int x = 0; x < COLS; x++) {
+                // 跳过安全区，不放墙
+                if (x < safeZoneSize && y < safeZoneSize) {
+                    map[y][x] = 0;
+                    continue;
+                }
+
+                // 随机决定是否放置墙
                 if (rand.nextDouble() < wallProbability) {
                     map[y][x] = 1;
-                    walls.add(new Wall(x * Wall.SIZE, y * Wall.SIZE));  // 每个墙壁的位置是 x * SIZE 和 y * SIZE
+                    walls.add(new Wall(x * Wall.SIZE, y * Wall.SIZE));
                 } else {
-                    map[y][x] = 0;  // 0表示空地
+                    map[y][x] = 0;
                 }
             }
         }
+
+        // 确保安全区至少一条通路通向外部
+        map[safeZoneSize - 1][safeZoneSize] = 0;  // 向右一格
+        map[safeZoneSize][safeZoneSize - 1] = 0;  // 向下
     }
+
 
     // 绘制地图，包括墙壁
     public void draw(Graphics g) {
@@ -77,5 +91,13 @@ public class GameMap {
 
     public int getCols() {
         return COLS;
+    }
+    public boolean isWallPixel(int pixelX, int pixelY) {
+        if (pixelX < 0 || pixelY < 0 || pixelX >= COLS * Wall.SIZE || pixelY >= ROWS * Wall.SIZE) {
+            return true; // 越界视为墙
+        }
+        int col = pixelX / Wall.SIZE;
+        int row = pixelY / Wall.SIZE;
+        return map[row][col] == 1;
     }
 }

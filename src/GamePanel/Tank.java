@@ -68,4 +68,8 @@ public class Tank {
         int centerY = y + DISPLAY_SIZE / 2 + dy;
         return new Ellipse2D.Double(centerX - collisionSize / 2.0, centerY - collisionSize / 2.0, collisionSize, collisionSize);
     }
+    public void setPosition(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
 }
